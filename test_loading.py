@@ -7,7 +7,6 @@ import os
 from collections import Counter
 import gin
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import tensorflow as tf
 from meta_dataset.data import config
@@ -28,7 +27,7 @@ model_dict = dict(
     ResNet50=backbone.ResNet50,
     ResNet101=backbone.ResNet101)
 
-BASE_PATH = '/media/selim/data/metadataset/records'
+BASE_PATH = '/storage/home/hcoda1/5/stekin6/scratch/records'
 GIN_FILE_PATH = 'meta_dataset/learn/gin/setups/data_config.gin'
 # 2
 gin.parse_config_file(GIN_FILE_PATH)
