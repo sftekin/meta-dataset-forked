@@ -7,7 +7,6 @@ import os
 from collections import Counter
 import gin
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import tensorflow as tf
 from meta_dataset.data import config
@@ -28,7 +27,7 @@ model_dict = dict(
     ResNet50=backbone.ResNet50,
     ResNet101=backbone.ResNet101)
 
-BASE_PATH = '/media/selim/data/metadataset/records'
+BASE_PATH = '/storage/home/hcoda1/5/stekin6/scratch/records'
 GIN_FILE_PATH = 'meta_dataset/learn/gin/setups/data_config.gin'
 # 2
 gin.parse_config_file(GIN_FILE_PATH)
@@ -40,7 +39,7 @@ NUM_QUERY = 15
 #                 'omniglot', 'quickdraw', 'vgg_flower']
 ALL_DATASETS = ['aircraft', 'cu_birds', 'dtd', 'omniglot', 'quickdraw', 'ilsvrc_2012']
 N_EPISODES = 100
-N_EPOCH = 600
+N_EPOCH = 700
 CHECKPOINT_DIR = "checkpoints"
 SAVE_FREQ = 10
 VARIABLE_WAYS_SHOT = False
@@ -178,6 +177,8 @@ def run(dataset_name):
     print(params)
     optimizer = torch.optim.Adam(model.parameters())
     max_acc = -99
+    tolerance = 50
+    patience = 0
     for epoch in range(N_EPOCH):
         model.train()
         train_loop(model, epoch, base_loader, optimizer, dataset_spec[0])
@@ -189,10 +190,20 @@ def run(dataset_name):
             max_acc = acc
             outfile = os.path.join(checkpoint_dir, 'best_model.tar')
             torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+            patience = 0
+        else:
+            patience += 1
 
         if (epoch % SAVE_FREQ == 0) or (epoch == N_EPOCH - 1):
             outfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(epoch))
             torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+
+        if patience >=tolerance:
+            outfile = os.path.join(checkpoint_dir, '{:d}.tar'.format(epoch))
+            torch.save({'epoch': epoch, 'state': model.state_dict()}, outfile)
+            print(f"No improvement is seen on validation "
+                  f"accuracy since {tolerance} epoch, early stopping...")
+            break
 
 
 if __name__ == '__main__':
